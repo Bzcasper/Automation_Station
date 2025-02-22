@@ -1,0 +1,42 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          # Add Railway CLI to PATH
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Railway Login
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Log in to Railway using the provided token
+          railway login --token $RAILWAY_TOKEN
+
+      - name: (Optional) Link Railway Project
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Optionally use a secret for your Railway project ID if needed
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        run: |
+          # If your project isn't already linked, uncomment the following line and replace <PROJECT_ID>
+          # railway link --project $RAILWAY_PROJECT_ID
+          echo "Project already linked or linking is handled by Railway configuration."
+
+      - name: Deploy to Railway
+        run: |
+          # Deploy the latest code to Railway.
+          railway deploy

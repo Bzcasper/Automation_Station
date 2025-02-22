@@ -1,0 +1,50 @@
+name: Deploy on Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # This job must run on your self-hosted runner (i.e. your local machine)
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Nix Environment
+        run: |
+          # Ensure Nix is available
+          if ! command -v nix &>/dev/null; then
+            echo "Error: Nix is not installed on this runner. Exiting."
+            exit 1
+          fi
+          echo "Using custom Nix configuration..."
+          # Export the custom Nix configuration directory
+          export NIX_CONF_DIR="G:\My Drive\Repository\Automation\Automation_Station\.config\nix"
+          # (Optional) Test that the config is being picked up
+          echo "Nix configuration directory is set to: $NIX_CONF_DIR"
+        shell: bash
+
+      - name: Deploy Updated Repository
+        run: |
+          set -euo pipefail
+          echo "Starting deployment process..."
+          # The working directory is already set to the checked-out repository
+          cd "${{ github.workspace }}"
+
+          # Option 1: Run a deploy script if one exists in your repo
+          if [ -f "./deploy.sh" ]; then
+            echo "Found deploy.sh script. Executing..."
+            chmod +x ./deploy.sh
+            ./deploy.sh
+          else
+            # Option 2: Execute default deploy commands (example: Docker Compose)
+            echo "No deploy.sh found. Running default deploy commands..."
+            docker-compose pull
+            docker-compose up -d
+          fi
+          echo "Deployment complete."
+        shell: bash
